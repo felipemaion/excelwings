@@ -59,7 +59,7 @@ def get_assets():
     print(f"Ends assets:{datetime.now()}- {job()}")  
     return assets
     
-@catch_exceptions(cancel_on_failure=True)    
+@catch_exceptions(cancel_on_failure=False)    
 def populate_prices():
     assets = get_assets()
 #     print(assets)
@@ -85,7 +85,7 @@ def populate_prices():
 #     return schedule.CancelJob
 
 
-@catch_exceptions(cancel_on_failure=False)
+@catch_exceptions(cancel_on_failure=True)
 def populate_fundamentos():
     assets = get_assets()
     print(f"Starts Fundamentos:{datetime.now()}")
@@ -110,11 +110,11 @@ def schedule_jobs():
     schedule.every(15).minutes.do(run_threaded, populate_prices).tag("bovespa")
 #     schedule.every(1).week.do(run_threaded, populate_fundamentos).tag("fundamentos")
 def stops_bovespas_jobs():
-    print(f"ENDING BOVESPA'S JOBS:")
+    print(f"ENDING BOVESPA'S JOBS.")
     schedule.clear("bovespa")
     
 def schedule_at_bovespa_time():
-    print(f"STARTING BOVESPA'S JOBS:")
+    print(f"STARTING BOVESPA'S JOBS: 10:00 - 18:30")
     schedule.every(1).day.at("10:00").do(schedule_jobs)
     schedule.every(1).day.at("18:30").do(stops_bovespas_jobs)
 # populate_prices()    
@@ -122,7 +122,7 @@ def schedule_at_bovespa_time():
 # total_DataFrame.to_excel("output20201019.xlsx")
 print(f"Starts schedulling:{datetime.now()}")
 schedule_at_bovespa_time()
-# schedule.every(30).seconds.do(run_threaded, populate_prices)
+schedule.every(1).to(5).minutes.do(run_threaded, populate_fundamentos)
 
 while 1:
 #     clear_output()
