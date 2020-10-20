@@ -43,7 +43,7 @@ def get_assets():
     assets = []
     current = xw.apps.keys()
     print(current)
-    wb = xw.apps[current[0]].books[0] 
+    wb = xw.apps[current[0]].books["Ações_Escolha-Online.xlsx"] 
     sht_assets = wb.sheets['ATIVOS']
     active = True
     i = 2
@@ -66,7 +66,7 @@ def populate_prices():
     print(f"Starts Prices:{datetime.now()}- {job()}")
     job()
     current = xw.apps.keys()
-    wb = xw.apps[current[0]].books[0] 
+    wb = xw.apps[current[0]].books["Ações_Escolha-Online.xlsx"] 
     sht_assets = wb.sheets['ATIVOS']
         # Pega último preço do Ativo
     for i, asset in enumerate(assets, start = 2):
@@ -81,14 +81,15 @@ def populate_prices():
             pass
     sht_assets = wb.sheets['INDICADOR']   
     sht_assets.range(f"F3").value = datetime.now()
-    print(f"Ends Prices:{datetime.now()}- {job()}")    
+    print(f"Ends Prices:{datetime.now()}- {job()}")
+    wb.save() 
 #     return schedule.CancelJob
 
 @catch_exceptions(cancel_on_failure=True)
 def set_time():
     job()
     current = xw.apps.keys()
-    wb = xw.apps[current[0]].books[0] 
+    wb = xw.apps[current[0]].books["Ações_Escolha-Online.xlsx"]
     sht_assets = wb.sheets['INDICADOR']
     sht_assets.range(f"D3").value = datetime.now()
 
@@ -106,10 +107,10 @@ def populate_fundamentos():
             total_DataFrame = pd.concat([total_DataFrame,load_DataFrame],sort=True, ignore_index=True).dropna(thresh=2)
     print(f"Ends Fundamentos:{datetime.now()}")
     current = xw.apps.keys()
-    wb = xw.apps[current[0]].books[0] 
+    wb = xw.apps[current[0]].books["Ações_Escolha-Online.xlsx"] 
     sht_fundamentos = wb.sheets['FUNDAMENTOS']
     sht_fundamentos.range(f"A1").value = total_DataFrame
-    
+    wb.save()
     return total_DataFrame
     
 def starts_bovespas_jobs():
@@ -123,6 +124,12 @@ def stops_bovespas_jobs():
     
 def schedule_at_bovespa_time():
     print(f"SCHEDULLING BOVESPA'S JOBS: 9:45 - 18:30")
+    now = datetime.now()
+    today9am = now.replace(hour=9, minute=45, second=0, microsecond=0)
+    today19pm = now.replace(hour=18, minute=30, second=0, microsecond=0)
+    if datetime.now() > today9am and datetime.now() < today19pm:
+        print("It is after 9:45, starting...")
+        starts_bovespas_jobs()
     schedule.every(1).day.at("09:45").do(starts_bovespas_jobs)
     schedule.every(1).day.at("18:30").do(stops_bovespas_jobs)
 
@@ -133,14 +140,14 @@ def schedule_fundamentos(minute=1):
 def schedule_server_time(sec=1):
     print(f"Schedulling Server Time to every {sec} seconds")
     schedule.every(sec).seconds.do(run_threaded, set_time).tag("horario")
-populate_prices()    
+# populate_prices()    
 # total_DataFrame = populate_fundamentos()
 # total_DataFrame.to_excel("output20201019.xlsx")
 print(f"Starts schedulling:{datetime.now()}")
 
 schedule_server_time()
 schedule_at_bovespa_time()
-schedule_fundamentos()
+# schedule_fundamentos()
 
 
 
