@@ -84,6 +84,13 @@ def populate_prices():
     print(f"Ends Prices:{datetime.now()}- {job()}")    
 #     return schedule.CancelJob
 
+@catch_exceptions(cancel_on_failure=True)
+def set_time():
+    job()
+    current = xw.apps.keys()
+    wb = xw.apps[current[0]].books[0] 
+    sht_assets = wb.sheets['INDICADOR']
+    sht_assets.range(f"D3").value = datetime.now()
 
 @catch_exceptions(cancel_on_failure=True)
 def populate_fundamentos():
@@ -105,24 +112,37 @@ def populate_fundamentos():
     
     return total_DataFrame
     
-def schedule_jobs():
+def starts_bovespas_jobs():
     print(f"Starting Jobs")
     schedule.every(15).minutes.do(run_threaded, populate_prices).tag("bovespa")
+    
 #     schedule.every(1).week.do(run_threaded, populate_fundamentos).tag("fundamentos")
 def stops_bovespas_jobs():
     print(f"ENDING BOVESPA'S JOBS.")
     schedule.clear("bovespa")
     
 def schedule_at_bovespa_time():
-    print(f"STARTING BOVESPA'S JOBS: 10:00 - 18:30")
-    schedule.every(1).day.at("10:00").do(schedule_jobs)
+    print(f"SCHEDULLING BOVESPA'S JOBS: 9:45 - 18:30")
+    schedule.every(1).day.at("09:45").do(starts_bovespas_jobs)
     schedule.every(1).day.at("18:30").do(stops_bovespas_jobs)
-# populate_prices()    
+
+def schedule_fundamentos(minute=1):
+    print(f"Schedulling Fundamentos to every {minute} minutes")
+    schedule.every(minute).to(5).minutes.do(run_threaded, populate_fundamentos)
+
+def schedule_server_time(sec=1):
+    print(f"Schedulling Server Time to every {sec} seconds")
+    schedule.every(sec).seconds.do(run_threaded, set_time).tag("horario")
+populate_prices()    
 # total_DataFrame = populate_fundamentos()
 # total_DataFrame.to_excel("output20201019.xlsx")
 print(f"Starts schedulling:{datetime.now()}")
+
+schedule_server_time()
 schedule_at_bovespa_time()
-schedule.every(1).to(5).minutes.do(run_threaded, populate_fundamentos)
+schedule_fundamentos()
+
+
 
 while 1:
 #     clear_output()
